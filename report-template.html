@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MSSecurityAudit — {{TENANT_ID}}</title>
+<style>
+  :root {
+    --bg:#0f1117; --surface:#1a1d2e; --surface2:#242740;
+    --accent:#4f8ef7; --ok:#10b981; --warn:#f59e0b; --fail:#ef4444;
+    --text:#e2e8f0; --muted:#64748b; --border:#2d3748;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); font-size:13px; }
+
+  /* ── HEADER ── */
+  header {
+    background:linear-gradient(135deg,var(--surface) 0%,#1e2140 100%);
+    border-bottom:1px solid var(--border);
+    padding:24px 32px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  header h1 { font-size:20px; font-weight:700; color:#fff; }
+  header h1 span { color:var(--accent); }
+  .meta { font-size:11px; color:var(--muted); text-align:right; line-height:1.9; }
+  .meta strong { color:var(--text); }
+
+  /* ── LAYOUT ── */
+  .container { max-width:1400px; margin:0 auto; padding:28px 32px; }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:36px; }
+  .kpi {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:20px; text-align:center;
+  }
+  .kpi .val { font-size:28px; font-weight:700; margin:8px 0 4px; }
+  .kpi .lbl { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .kpi.ok   .val { color:var(--ok); }
+  .kpi.warn .val { color:var(--warn); }
+  .kpi.fail .val { color:var(--fail); }
+  .progress-bar { height:7px; border-radius:4px; background:var(--surface2); overflow:hidden; margin-top:8px; }
+  .progress-fill { height:100%; border-radius:4px; }
+  .fill-ok   { background:var(--ok); }
+  .fill-warn { background:var(--warn); }
+  .fill-fail { background:var(--fail); }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom:40px; }
+  .section-header { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .section-header h2 { font-size:14px; font-weight:600; color:#fff; }
+  .pill { font-size:11px; padding:2px 10px; border-radius:20px; background:var(--surface2); color:var(--muted); }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x:auto; border-radius:10px; border:1px solid var(--border); }
+  table { width:100%; border-collapse:collapse; }
+  th {
+    background:var(--surface2); padding:10px 14px;
+    text-align:left; font-size:11px; text-transform:uppercase;
+    letter-spacing:.05em; color:var(--muted); border-bottom:1px solid var(--border);
+  }
+  td { padding:9px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(79,142,247,.04); }
+  tr.risk-critical td { background:rgba(220,38,38,.08); }
+  tr.risk-high     td { background:rgba(239,68,68,.05); }
+  tr.risk-medium   td { background:rgba(245,158,11,.04); }
+
+  /* ── BADGES ── */
+  .badge { display:inline-block; font-size:10px; padding:2px 8px; border-radius:20px; font-weight:500; white-space:nowrap; }
+  .badge-ok       { background:rgba(16,185,129,.15);  color:#34d399; }
+  .badge-warn     { background:rgba(245,158,11,.15);  color:#fbbf24; }
+  .badge-fail     { background:rgba(239,68,68,.15);   color:#f87171; }
+  .badge-critical { background:rgba(220,38,38,.20);   color:#fca5a5; }
+  .badge-high     { background:rgba(239,68,68,.15);   color:#f87171; }
+  .badge-medium   { background:rgba(245,158,11,.15);  color:#fbbf24; }
+  .badge-low      { background:rgba(100,116,139,.15); color:#94a3b8; }
+  .findings { font-size:11px; color:var(--muted); max-width:320px; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align:center; padding:20px 32px;
+    color:var(--muted); font-size:11px;
+    border-top:1px solid var(--border); margin-top:24px;
+  }
+  footer a { color:var(--accent); text-decoration:none; }
+
+  @media print {
+    body { background:#fff; color:#000; }
+    header, .kpi, .table-wrap { border-color:#ddd; }
+    th { background:#f1f5f9; color:#475569; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>MS<span>Security</span>Audit &nbsp;·&nbsp; Security Report</h1>
+    <div style="font-size:12px;color:var(--muted);margin-top:4px">
+      Microsoft 365 · Entra ID · Defender for Endpoint
+    </div>
+  </div>
+  <div class="meta">
+    <div>Tenant : <strong>{{TENANT_ID}}</strong></div>
+    <div>Generated : {{TIMESTAMP}}</div>
+    <div>Microsoft Secure Score : <strong style="color:var(--accent)">{{SECURE_SCORE}} ({{SECURE_SCORE_PCT}})</strong></div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ── KPI GRID ── -->
+  <div class="kpi-grid">
+
+    <!-- MFA Coverage -->
+    <div class="kpi {{MFA_KPI_CLASS}}">
+      <div class="lbl">MFA Coverage</div>
+      <div class="val">{{MFA_COVERAGE}}%</div>
+      <div class="progress-bar">
+        <div class="progress-fill {{MFA_FILL_CLASS}}" style="width:{{MFA_COVERAGE}}%"></div>
+      </div>
+    </div>
+
+    <!-- Device Compliance -->
+    <div class="kpi {{DEV_KPI_CLASS}}">
+      <div class="lbl">Device Compliance</div>
+      <div class="val">{{DEVICE_COVERAGE}}%</div>
+      <div class="progress-bar">
+        <div class="progress-fill {{DEV_FILL_CLASS}}" style="width:{{DEVICE_COVERAGE}}%"></div>
+      </div>
+    </div>
+
+    <!-- Critical Devices -->
+    <div class="kpi {{CRIT_KPI_CLASS}}">
+      <div class="lbl">Critical Devices</div>
+      <div class="val">{{DEVICE_CRITICAL}}</div>
+    </div>
+
+    <!-- Global Admins -->
+    <div class="kpi {{GA_KPI_CLASS}}">
+      <div class="lbl">Global Admins</div>
+      <div class="val">{{GA_COUNT}}</div>
+    </div>
+
+    <!-- Active CA Policies -->
+    <div class="kpi {{CA_KPI_CLASS}}">
+      <div class="lbl">Active CA Policies</div>
+      <div class="val">{{CA_ACTIVE}}</div>
+    </div>
+
+  </div>
+
+  <!-- ── CONDITIONAL ACCESS ── -->
+  <div class="section">
+    <div class="section-header">
+      <h2>Conditional Access Policies</h2>
+      <span class="pill">{{CA_TOTAL}} policies</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Policy Name</th>
+            <th>State</th>
+            <th>MFA</th>
+            <th>Excluded Users</th>
+            <th>Score</th>
+            <th>Findings</th>
+          </tr>
+        </thead>
+        <tbody>{{CA_ROWS}}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── MFA ── -->
+  <div class="section">
+    <div class="section-header">
+      <h2>MFA — Users Without Registration (top 20)</h2>
+      <span class="pill">{{MFA_DISABLED}} users without MFA</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Display Name</th>
+            <th>UPN</th>
+            <th>MFA Status</th>
+            <th>Auth Methods</th>
+          </tr>
+        </thead>
+        <tbody>{{MFA_ROWS}}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── PIM ── -->
+  <div class="section">
+    <div class="section-header">
+      <h2>Privileged Role Assignments (PIM)</h2>
+      <span class="pill">{{PIM_TOTAL}} assignments</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Principal</th>
+            <th>UPN</th>
+            <th>Type</th>
+            <th>Assignment</th>
+          </tr>
+        </thead>
+        <tbody>{{PIM_ROWS}}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── DEFENDER FOR ENDPOINT ── -->
+  <div class="section">
+    <div class="section-header">
+      <h2>Defender for Endpoint — Device Compliance</h2>
+      <span class="pill">{{DEVICE_TOTAL}} devices</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Device</th>
+            <th>OS</th>
+            <th>Version</th>
+            <th>Compliance</th>
+            <th>Encrypted</th>
+            <th>Last Sync</th>
+            <th>Risk</th>
+            <th>User</th>
+          </tr>
+        </thead>
+        <tbody>{{DEV_ROWS}}</tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  MSSecurityAudit v1.0.0 — {{TIMESTAMP}} —
+  <a href="https://github.com/franck-crassava/MSSecurityAudit">github.com/franck-crassava/MSSecurityAudit</a>
+</footer>
+
+</body>
+</html>
