@@ -13,7 +13,6 @@
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:-apple-system,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); font-size:13px; }
 
-  /* ── HEADER ── */
   header {
     background:linear-gradient(135deg,var(--surface) 0%,#1e2140 100%);
     border-bottom:1px solid var(--border);
@@ -25,10 +24,8 @@
   .meta { font-size:11px; color:var(--muted); text-align:right; line-height:1.9; }
   .meta strong { color:var(--text); }
 
-  /* ── LAYOUT ── */
   .container { max-width:1400px; margin:0 auto; padding:28px 32px; }
 
-  /* ── KPI CARDS ── */
   .kpi-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:36px; }
   .kpi {
     background:var(--surface); border:1px solid var(--border);
@@ -36,22 +33,25 @@
   }
   .kpi .val { font-size:28px; font-weight:700; margin:8px 0 4px; }
   .kpi .lbl { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
-  .kpi.ok   .val { color:var(--ok); }
-  .kpi.warn .val { color:var(--warn); }
-  .kpi.fail .val { color:var(--fail); }
-  .progress-bar { height:7px; border-radius:4px; background:var(--surface2); overflow:hidden; margin-top:8px; }
-  .progress-fill { height:100%; border-radius:4px; }
-  .fill-ok   { background:var(--ok); }
-  .fill-warn { background:var(--warn); }
-  .fill-fail { background:var(--fail); }
 
-  /* ── SECTIONS ── */
+  /* KPI color driven by data-status attribute — no dynamic class needed */
+  .kpi[data-status="ok"]   .val { color:var(--ok); }
+  .kpi[data-status="warn"] .val { color:var(--warn); }
+  .kpi[data-status="fail"] .val { color:var(--fail); }
+
+  .progress-bar { height:7px; border-radius:4px; background:var(--surface2); overflow:hidden; margin-top:8px; }
+  .progress-fill { height:100%; width:0; border-radius:4px; }
+
+  /* Progress fill color driven by data-status on parent .kpi */
+  .kpi[data-status="ok"]   .progress-fill { background:var(--ok); }
+  .kpi[data-status="warn"] .progress-fill { background:var(--warn); }
+  .kpi[data-status="fail"] .progress-fill { background:var(--fail); }
+
   .section { margin-bottom:40px; }
   .section-header { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
   .section-header h2 { font-size:14px; font-weight:600; color:#fff; }
   .pill { font-size:11px; padding:2px 10px; border-radius:20px; background:var(--surface2); color:var(--muted); }
 
-  /* ── TABLE ── */
   .table-wrap { overflow-x:auto; border-radius:10px; border:1px solid var(--border); }
   table { width:100%; border-collapse:collapse; }
   th {
@@ -66,7 +66,6 @@
   tr.risk-high     td { background:rgba(239,68,68,.05); }
   tr.risk-medium   td { background:rgba(245,158,11,.04); }
 
-  /* ── BADGES ── */
   .badge { display:inline-block; font-size:10px; padding:2px 8px; border-radius:20px; font-weight:500; white-space:nowrap; }
   .badge-ok       { background:rgba(16,185,129,.15);  color:#34d399; }
   .badge-warn     { background:rgba(245,158,11,.15);  color:#fbbf24; }
@@ -77,7 +76,6 @@
   .badge-low      { background:rgba(100,116,139,.15); color:#94a3b8; }
   .findings { font-size:11px; color:var(--muted); max-width:320px; }
 
-  /* ── FOOTER ── */
   footer {
     text-align:center; padding:20px 32px;
     color:var(--muted); font-size:11px;
@@ -104,54 +102,45 @@
   <div class="meta">
     <div>Tenant : <strong>{{TENANT_ID}}</strong></div>
     <div>Generated : {{TIMESTAMP}}</div>
-    <div>Microsoft Secure Score : <strong style="color:var(--accent)">{{SECURE_SCORE}} ({{SECURE_SCORE_PCT}})</strong></div>
+    <div>Secure Score : <strong style="color:var(--accent)">{{SECURE_SCORE}} ({{SECURE_SCORE_PCT}})</strong></div>
   </div>
 </header>
 
 <div class="container">
 
-  <!-- ── KPI GRID ── -->
+  <!-- KPI GRID — data-status is set by the PS script: ok / warn / fail -->
   <div class="kpi-grid">
 
-    <!-- MFA Coverage -->
-    <div class="kpi {{MFA_KPI_CLASS}}">
+    <div class="kpi" data-status="{{MFA_STATUS}}">
       <div class="lbl">MFA Coverage</div>
       <div class="val">{{MFA_COVERAGE}}%</div>
-      <div class="progress-bar">
-        <div class="progress-fill {{MFA_FILL_CLASS}}" style="width:{{MFA_COVERAGE}}%"></div>
-      </div>
+      <div class="progress-bar"><div class="progress-fill" data-width="{{MFA_COVERAGE}}"></div></div>
     </div>
 
-    <!-- Device Compliance -->
-    <div class="kpi {{DEV_KPI_CLASS}}">
+    <div class="kpi" data-status="{{DEV_STATUS}}">
       <div class="lbl">Device Compliance</div>
       <div class="val">{{DEVICE_COVERAGE}}%</div>
-      <div class="progress-bar">
-        <div class="progress-fill {{DEV_FILL_CLASS}}" style="width:{{DEVICE_COVERAGE}}%"></div>
-      </div>
+      <div class="progress-bar"><div class="progress-fill" data-width="{{DEVICE_COVERAGE}}"></div></div>
     </div>
 
-    <!-- Critical Devices -->
-    <div class="kpi {{CRIT_KPI_CLASS}}">
+    <div class="kpi" data-status="{{CRIT_STATUS}}">
       <div class="lbl">Critical Devices</div>
       <div class="val">{{DEVICE_CRITICAL}}</div>
     </div>
 
-    <!-- Global Admins -->
-    <div class="kpi {{GA_KPI_CLASS}}">
+    <div class="kpi" data-status="{{GA_STATUS}}">
       <div class="lbl">Global Admins</div>
       <div class="val">{{GA_COUNT}}</div>
     </div>
 
-    <!-- Active CA Policies -->
-    <div class="kpi {{CA_KPI_CLASS}}">
+    <div class="kpi" data-status="{{CA_STATUS}}">
       <div class="lbl">Active CA Policies</div>
       <div class="val">{{CA_ACTIVE}}</div>
     </div>
 
   </div>
 
-  <!-- ── CONDITIONAL ACCESS ── -->
+  <!-- CONDITIONAL ACCESS -->
   <div class="section">
     <div class="section-header">
       <h2>Conditional Access Policies</h2>
@@ -160,21 +149,14 @@
     <div class="table-wrap">
       <table>
         <thead>
-          <tr>
-            <th>Policy Name</th>
-            <th>State</th>
-            <th>MFA</th>
-            <th>Excluded Users</th>
-            <th>Score</th>
-            <th>Findings</th>
-          </tr>
+          <tr><th>Policy Name</th><th>State</th><th>MFA</th><th>Excluded Users</th><th>Score</th><th>Findings</th></tr>
         </thead>
         <tbody>{{CA_ROWS}}</tbody>
       </table>
     </div>
   </div>
 
-  <!-- ── MFA ── -->
+  <!-- MFA -->
   <div class="section">
     <div class="section-header">
       <h2>MFA — Users Without Registration (top 20)</h2>
@@ -183,19 +165,14 @@
     <div class="table-wrap">
       <table>
         <thead>
-          <tr>
-            <th>Display Name</th>
-            <th>UPN</th>
-            <th>MFA Status</th>
-            <th>Auth Methods</th>
-          </tr>
+          <tr><th>Display Name</th><th>UPN</th><th>MFA Status</th><th>Auth Methods</th></tr>
         </thead>
         <tbody>{{MFA_ROWS}}</tbody>
       </table>
     </div>
   </div>
 
-  <!-- ── PIM ── -->
+  <!-- PIM -->
   <div class="section">
     <div class="section-header">
       <h2>Privileged Role Assignments (PIM)</h2>
@@ -204,20 +181,14 @@
     <div class="table-wrap">
       <table>
         <thead>
-          <tr>
-            <th>Role</th>
-            <th>Principal</th>
-            <th>UPN</th>
-            <th>Type</th>
-            <th>Assignment</th>
-          </tr>
+          <tr><th>Role</th><th>Principal</th><th>UPN</th><th>Type</th><th>Assignment</th></tr>
         </thead>
         <tbody>{{PIM_ROWS}}</tbody>
       </table>
     </div>
   </div>
 
-  <!-- ── DEFENDER FOR ENDPOINT ── -->
+  <!-- DEFENDER FOR ENDPOINT -->
   <div class="section">
     <div class="section-header">
       <h2>Defender for Endpoint — Device Compliance</h2>
@@ -226,16 +197,7 @@
     <div class="table-wrap">
       <table>
         <thead>
-          <tr>
-            <th>Device</th>
-            <th>OS</th>
-            <th>Version</th>
-            <th>Compliance</th>
-            <th>Encrypted</th>
-            <th>Last Sync</th>
-            <th>Risk</th>
-            <th>User</th>
-          </tr>
+          <tr><th>Device</th><th>OS</th><th>Version</th><th>Compliance</th><th>Encrypted</th><th>Last Sync</th><th>Risk</th><th>User</th></tr>
         </thead>
         <tbody>{{DEV_ROWS}}</tbody>
       </table>
@@ -248,6 +210,17 @@
   MSSecurityAudit v1.0.0 — {{TIMESTAMP}} —
   <a href="https://github.com/franck-crassava/MSSecurityAudit">github.com/franck-crassava/MSSecurityAudit</a>
 </footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.progress-fill').forEach(function (fill) {
+      var pct = fill.getAttribute('data-width');
+      if (pct) {
+        fill.style.width = pct + '%';
+      }
+    });
+  });
+</script>
 
 </body>
 </html>
